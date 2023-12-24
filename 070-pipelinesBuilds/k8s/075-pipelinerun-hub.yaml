@@ -1,0 +1,44 @@
+# tkn pipeline start tekton-greeter-pipeline-hub \
+# --serviceaccount='tekton-deployer-sa' 
+# --param GIT_REPO='https://github.com/gitops-cookbook/tekton-tutorial-greeter.git' \
+# --param GIT_REF='master' \
+# --param CONTEXT_DIR='quarkus' \
+# --param DESTINATION_IMAGE='docker.io/c40s/tekton-greeter:latest' \
+# --param IMAGE_DOCKERFILE='quarkus/Dockerfile' \
+# --param IMAGE_CONTEXT_DIR='quarkus' \
+# --param SCRIPT='kubectl create deploy tekton-greeter --image=docker.io/c40s/tekton-greeter:latest' \
+# --workspace name=app-source,claimName=app-source-pvc \
+# --workspace name=maven-settings,emptyDir="" --use-param-defaults --showlog
+
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: tekton-greeter-pipeline-run-
+spec:
+  serviceAccountName: tekton-deployer-sa
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  params:
+    - name: GIT_REPO
+      value: https://github.com/gitops-cookbook/tekton-tutorial-greeter.git
+    - name: GIT_REF
+      value: "master"
+    - name: CONTEXT_DIR
+      value: quarkus
+    - name: DESTINATION_IMAGE
+      value: "docker.io/c40s/tekton-greeter:latest"
+    - name: IMAGE_DOCKERFILE
+      value: quarkus/Dockerfile
+    - name: IMAGE_CONTEXT_DIR
+      value: quarkus
+    - name: SCRIPT
+      value: kubectl create deploy tekton-greeter --image=docker.io/c40s/tekton-greeter:latest
+  pipelineRef:
+    name: tekton-greeter-pipeline-hub
+  workspaces:
+    - name: app-source
+      persistentVolumeClaim:
+        claimName: app-source-pvc
+    - name: maven-settings
+      emptyDir: {}

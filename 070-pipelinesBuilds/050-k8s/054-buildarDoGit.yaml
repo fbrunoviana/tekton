@@ -1,0 +1,94 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-push-app
+spec:
+  workspaces:
+    - name: source
+      description: repo onde vamos clonar do git
+  params:
+    - name: contextDir
+      default: ./
+    - name: tlsVerify
+      type: string
+      default: "false"
+    - name: url
+      default: "https://github.com/spring-guides/gs-spring-boot.git"
+    - name: sslVerify
+      type: string
+      default: "false"
+    - name: revision
+      default: main
+    - name: subdirectory
+      default: ""
+    - name: destinationImage
+      default: ""
+    - name: storageDriver
+      type: string
+      default: vfs
+  steps:
+    - name: clone
+      resources: {}
+      script: |
+        CHECKOUT_DIR="$(workspaces.source.path)/$(params.subdirectory)"
+        echo ${CHECKOUT_DIR} 
+        cleandir() {
+          if [[ -d "$CHECKOUT_DIR" ]] ; then
+            rm -rf "$CHECKOUT_DIR"/*
+            rm -rf "$CHECKOUT_DIR"/.[!.]*
+            rm -rf "$CHECKOUT_DIR"/..?*
+          fi
+        }
+        /ko-app/git-init \
+          -url "$(params.url)" \
+          -revision "$(params.revision)" \
+          -path "$CHECKOUT_DIR" \
+          -sslVerify="$(params.sslVerify)"
+        cd "$CHECKOUT_DIR"
+        RESULT_SHA="$(git rev-parse HEAD)"
+      image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.21.0
+    # - name: onde-to
+    #   image: gcr.io/cloud-builders/mvn
+    #   command:
+    #     - ls
+    #   args:
+    #     - "-ilha"
+    #     - "workspace/source"
+    - name: build
+      image: gcr.io/cloud-builders/mvn
+      command:
+        - mvn
+      args:
+        - "-f"
+        - "$(workspaces.source.path)/$(params.subdirectory)/complete/pom.xml"
+        - "clean"
+        - "package"
+      env: 
+        - name: user.home
+          value: /home/tekton
+      workingDir: "/workspace/source/$(params.contextDir)"
+    - name: build-and-push-image
+      securityContext:
+        privileged: true
+      image: quay.io/buildah/stable
+      script: |
+        #!/usr/bin/env bash
+        echo "[+] buildah --storage-driver=$STORAGE_DRIVER --tls-verify=$(params.tlsVerify) bud --layers -t $DESTINATION_IMAGE $CONTEXT_DIR"
+        echo "[+] buildah --storage-driver=$STORAGE_DRIVER --tls-verify=$(params.tlsVerify) push $DESTINATION_IMAGE docker://$DESTINATION_IMAGE"
+        
+        buildah --storage-driver=$STORAGE_DRIVER --tls-verify=$(params.tlsVerify) bud --layers -t $DESTINATION_IMAGE $CONTEXT_DIR
+        buildah --storage-driver=$STORAGE_DRIVER --tls-verify=$(params.tlsVerify) push $DESTINATION_IMAGE docker://$DESTINATION_IMAGE
+      env:
+        - name: DESTINATION_IMAGE
+          value: $(params.destinationImage)
+        - name: CONTEXT_DIR
+          value: "/workspace/source/$(params.contextDir)"
+        - name: STORAGE_DRIVER
+          value: $(params.storageDriver)
+      workingDir: "/workspace/source/$(params.contextDir)"
+      volumeMounts:
+      - name: varlibc
+        mountPath: /var/lib/containers
+  volumes:
+    - name: varlibc
+      emptyDir: {}

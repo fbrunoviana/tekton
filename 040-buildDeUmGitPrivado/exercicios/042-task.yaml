@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone
+spec:
+  workspaces:
+    - name: output
+  steps:
+    - name: git-clone
+      image: alpine/git # mudei a imagem do git para outra
+      script: |
+        #!/bin/sh
+        export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
+        export GIT_SSL_NO_VERIFY=1
+        git clone git@gitlab.com:fbrunoviana/gs-spring-boot-privado.git $(workspaces.output.path)
+    - name: build # Preservei o build
+      image: gcr.io/cloud-builders/mvn
+      command:
+        - mvn
+      args:
+        - "-f"
+        - "$(workspaces.output.path)/complete/pom.xml"
+        - "clean"
+        - "package"

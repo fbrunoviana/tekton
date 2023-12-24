@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: guelo
+spec:
+  steps:
+    - image: ubuntu
+      name: exibe-guelo
+      command: 
+        - /bin/bash
+      args:
+        ['-c', 'echo Guelo Queima']

@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: de-zero-a-guelo 
+spec:
+  steps:
+    - image: ubuntu
+      name: de-zero-a-guelo 
+      command: 
+        - /bin/bash
+      args:
+        ['-c', 'for ((i=0; i<=100; i++)); do echo ${i}; done']
+    - image: ubuntu
+      name: de-zero-a-guelo-par
+      command: 
+        - /bin/bash
+      args:
+        ['-c', 'for ((i=0; i<=100; i+=2)); do echo ${i}; done'] 

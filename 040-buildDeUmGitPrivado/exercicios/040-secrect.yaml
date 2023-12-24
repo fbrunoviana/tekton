@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    tekton.dev/git-0: gitlab.com
+  name: ssh-key-secret
+type: kubernetes.io/ssh-auth
+data:
+  ssh-privatekey: <SUA CHAVE BASE64> 

@@ -1,0 +1,11 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: kubectl-taskrun
+spec:
+  serviceAccountName: tekton-deployer-sa
+  taskRef:
+    name: kubectl
+  params:
+  - name: SCRIPT
+    value: "kubectl create deploy tekton-greeter --image=docker.io/c40s/tekton-greeter:latest"

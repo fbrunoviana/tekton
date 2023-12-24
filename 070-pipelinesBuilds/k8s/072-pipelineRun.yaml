@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1 
+kind: PipelineRun
+metadata:
+  generateName: tekton-greeter-pipeline-run- 
+spec:
+  serviceAccountName: tekton-deployer-sa
+  params:
+    - name: GIT_REPO
+      value: https://gitlab.com/fbrunoviana/gs-spring-boot.git
+    - name: GIT_REF
+      value: "main"
+    - name: DESTINATION_IMAGE
+      value: "docker.io/c40s/tekton-greeter3:latest" 
+    - name: SCRIPT
+      value: kubectl create deploy tekton-greeter --image=docker.io/c40s/tekton-greeter:latest
+
+  pipelineRef:
+    name: tekton-greeter-pipeline
+  workspaces:
+    - name: source
+      emptyDir: {}

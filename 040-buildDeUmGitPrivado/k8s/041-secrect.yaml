@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-secret #1
+  annotations:
+    tekton.dev/git-0: https://gitlab.com #2
+type: kubernetes.io/basic-auth #3
+stringData:
+  username: <SEU EMAIL> # <Username> #4
+  password: '<SUA SENHA>' #<Password> #5

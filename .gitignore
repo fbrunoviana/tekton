@@ -1,0 +1,5 @@
+*.DS_Store*
+*appJava.sh*
+900-projetos/*
+080-tektonTriggers/*
+100-helmETekton/*

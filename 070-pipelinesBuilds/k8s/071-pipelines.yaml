@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tekton-greeter-pipeline
+spec:
+  params: #1
+    - name: GIT_REPO
+      type: string
+    - name: GIT_REF
+      type: string
+    - name: DESTINATION_IMAGE
+      type: string
+    - name: SCRIPT
+      type: string
+  tasks: # 2
+    - name: build-push-app
+      taskRef: # 3
+        name: build-push-app
+      params: 
+        - name: url
+          value: "$(params.GIT_REPO)"
+        - name: revision
+          value: "$(params.GIT_REF)"
+        - name: destinationImage
+          value: "$(params.DESTINATION_IMAGE)"
+      workspaces:
+        - name: source
+    - name: deploy-app
+      taskRef:
+        name: kubectl
+      params:
+        - name: SCRIPT
+          value: "$(params.SCRIPT)"
+      workspaces:
+        - name: source
+      runAfter: # 4
+        - build-push-app
+  workspaces: # 5
+    - name: source

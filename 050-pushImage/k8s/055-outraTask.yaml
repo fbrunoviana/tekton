@@ -1,0 +1,56 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: gitlab-java-build-push
+spec:
+  params:
+    - name: GITLAB_URL
+      type: string
+      description: URL do repositório GitLab
+    - name: DOCKER_IMAGE
+      type: string
+      description: Nome da imagem Docker (incluindo o repositório)
+    - name: DOWNLOAD_PATH
+      default: "/workspace/download"
+      description: Caminho para baixar o código fonte
+
+  workspaces:
+    - name: shared-data
+
+  steps:
+    - name: clone-repo
+      image: alpine/git
+      script: |
+        git clone $(params.GITLAB_URL) $(workspaces.shared-data.path)/repo
+
+    - name: maven-build
+      image: maven:3.8.7-openjdk-18
+      script: |
+        mvn -f $(workspaces.shared-data.path)/repo/complete/pom.xml clean package
+
+    - name: prepare-jar
+      image: alpine
+      script: |
+        find $(workspaces.shared-data.path)/repo/complete/target/ -name "*.jar" -exec cp {} $(workspaces.shared-data.path)/repo/complete/target/app.jar \;
+
+    - name: build-image
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - "--context=$(workspaces.shared-data.path)/repo"
+        - "--dockerfile=$(workspaces.shared-data.path)/repo/Dockerfile"
+        - "--destination=$(params.DOCKER_IMAGE)"
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+
+  results:
+    - name: IMAGE_DIGEST
+      description: The digest of the image that was pushed
+
+  volumes:
+    - name: docker-config
+      secret:
+        secretName: dockerhub-credentials-kaniko
+        items:
+          - key: .dockerconfigjson
+            path: config.json

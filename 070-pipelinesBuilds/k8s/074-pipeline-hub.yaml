@@ -1,0 +1,93 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tekton-greeter-pipeline-hub
+spec:
+
+  params:
+    - name: GIT_REPO
+      type: string
+      default:  https://github.com/gitops-cookbook/tekton-tutorial-greeter.git
+    - name: GIT_REF
+      type: string
+      default: main
+    - name: DESTINATION_IMAGE
+      type: string
+      default: docker.io/c40s/tekton-greeter:latest
+    - name: SCRIPT
+      type: string
+      default: |
+        kubectl create deploy tekton-greeter --image=docker.io/c40s/tekton-greeter:latest
+    - name: CONTEXT_DIR
+      type: string
+      default: ./Dockerfile
+    - name: IMAGE_DOCKERFILE
+      type: string
+      default: .
+    - name: IMAGE_CONTEXT_DIR
+      type: string
+      default: .
+  tasks:
+    - name: fetch-repo
+      params:
+        - name: url
+          value: $(params.GIT_REPO)
+        - name: revision
+          value: $(params.GIT_REF)
+        - name: deleteExisting
+          value: "true"
+        - name: verbose
+          value: "true"
+      taskRef:
+        kind: Task
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: app-source
+    - name: build-app
+      params:
+        - name: GOALS
+          value: 
+          - -DskipTests 
+          - clean
+          - package
+        - name: CONTEXT_DIR
+          value: "$(params.CONTEXT_DIR)"
+      runAfter:
+        - fetch-repo
+      taskRef:
+        kind: Task
+        name: maven
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: app-source
+    - name: build-push-image
+      params:
+        - name: IMAGE
+          value: "$(params.DESTINATION_IMAGE)"
+        - name: CONTEXT
+          value: "$(params.IMAGE_CONTEXT_DIR)"
+        - name: DOCKERFILE
+          value: "$(params.IMAGE_DOCKERFILE)"
+      runAfter:
+        - build-app
+      taskRef:
+        kind: Task
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: app-source
+    - name: deploy 
+      params:
+        - name: SCRIPT
+          value: "$(params.SCRIPT)"
+      runAfter:
+        - build-push-image
+      taskRef:
+        kind: Task
+        name: kubernetes-actions
+  workspaces:
+    - name: app-source
+    - name: maven-settings
