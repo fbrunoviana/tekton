@@ -1,5 +1,14 @@
-# Tekton Tutoriais
+# Tekton Tutoriais: Domine o CI/CD com Kubernetes
 ![](901-img/banner.png)
+
+Bem-vindo ao universo do Tekton, uma ferramenta para fazer o seu CI/CD em Kubernetes. Este repositório é um compêndio abrangente, oferecendo desde tutoriais básicos até técnicas avançadas, pretendo ir adiconando as minhas experiencias do uso da ferramenta. 
+
+## O Que Você Encontrará Aqui?
+Cada seção deste repositório é cuidadosamente elaborada para guiá-lo através de diferentes aspectos do Tekton, tornando-o um mestre na arte da automação de pipelines.
+
+Também contém alguns projetos que eu achei por ai na internet.
+
+## Tabela de conteudo
 
 | ID | Nome | Link | Status |
 |------|-------------------|---------------------------------------------------------------------------------------------------------------------------|--------|
@@ -10,5 +19,3 @@
 | 050 | pushImage | [050](https://github.com/fbrunoviana/tekton/tree/main/050-pushImage) | ✅ |
 | 060 | CD | [060](https://github.com/fbrunoviana/tekton/tree/main/060-CD) | ✅ |
 | 070 | pipelinesBuilds | [070](https://github.com/fbrunoviana/tekton/tree/main/070-pipelinesBuilds) | ✅ |
-| 080 | tektonTriggers | [080](https://github.com/fbrunoviana/tekton/tree/main/080-tektonTriggers) | ... |
-| 100 | helmETekton | [100](https://github.com/fbrunoviana/tekton/tree/main/100-helmETekton) | ... |
